@@ -15,6 +15,8 @@ module Transfers
       Transfer.transaction do
         transfer = fetch_transfer(params[:transfer_id])
 
+        return if transfer_finished(transfer)
+
         wallets = fetch_wallets(transfer)
         sender_wallet = wallets[transfer.sender_wallet_id]
         recepient_wallet = wallets[transfer.recepient_wallet_id]
@@ -31,6 +33,10 @@ module Transfers
     end
 
     private
+
+    def transfer_finished(transfer)
+      transfer.completed? || transfer.canceled?
+    end
 
     def check_user!(sender_wallet, current_user)
       context.fail!("PERMISSION_DENIED") unless sender_wallet.user_id != current_user.id

@@ -67,13 +67,13 @@ module Transfers
     end
 
     def create_transfer(sender_wallet, recepient_wallet, currency, params)
-      amount, transaction_type, execute_at = params.values_at(:amount, :transaction_type, :execute_at)
+      amount, transfer_type, execute_at = params.values_at(:amount, :transfer_type, :execute_at)
       Transfer.create(
         sender_wallet_id: sender_wallet.id,
         recepient_wallet: recepient_wallet.id,
         currency_id: currency.id,
         amount:,
-        transaction_type:,
+        transfer_type:,
         execute_at:
       )
     end
