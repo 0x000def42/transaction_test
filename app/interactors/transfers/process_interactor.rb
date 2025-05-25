@@ -1,8 +1,8 @@
 module Transfers
   class ProcessInteractor < ApplicationInteractor
-    class Contract < Dry::Validation::Contract
+    class Contract < ApplicationContract
       params do
-        required(:transfer_id).filled(:format, UUID_FORMAT)
+        required(:transfer_id).filled(:uuid)
       end
     end
 
@@ -39,7 +39,7 @@ module Transfers
     end
 
     def check_user!(sender_wallet, current_user)
-      context.fail!("PERMISSION_DENIED") unless sender_wallet.user_id != current_user.id
+      context.fail!("FORBIDDEN") unless sender_wallet.user_id != current_user.id
     end
 
     def move_funds(sender_wallet, recepient_wallet, amount)
@@ -65,7 +65,7 @@ module Transfers
     end
 
     def fetch_transfer(transfer_id)
-      Transfer.find_by!(uuid: transfer_id).lock
+      Transfer.lock.find_by!(uuid: transfer_id)
     end
   end
 end

@@ -6,6 +6,9 @@ class Transfer < ApplicationRecord
 
   TYPES = [ IMMEDIATE_TYPE, SCHEDULED_TYPE ].freeze
 
+  belongs_to :sender_wallet
+  belongs_to :recepient_wallet
+
   aasm column: :state do
     state :created, initial: true
     state :scheduled, :failed, :canceled, :completed

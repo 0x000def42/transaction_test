@@ -34,6 +34,8 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  gem "rspec-rails", "~> 8.0"
 end
 
 group :development do
@@ -44,3 +46,4 @@ end
 gem "aasm", "~> 5.5"
 
 gem "dry-validation", "~> 1.11"
+

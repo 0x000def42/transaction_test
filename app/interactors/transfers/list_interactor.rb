@@ -1,6 +1,6 @@
 module Transfers
   class ListInteractor < ApplicationInteractor
-    class Contract < Dry::Validation::Contract
+    class Contract < ApplicationContract
       params do
         # ...
       end

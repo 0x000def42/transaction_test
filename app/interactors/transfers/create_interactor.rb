@@ -2,8 +2,8 @@ module Transfers
   class CreateInteractor < ApplicationInteractor
     class Contract < ApplicationContract
       params do
-        required(:sender_id).filled(format?: UUID_FORMAT)
-        required(:recepient_id).filled(format?: UUID_FORMAT)
+        required(:sender_id).filled(:uuid)
+        required(:recepient_id).filled(:uuid)
         required(:amount).filled(:decimal)
         required(:currency_code).filled(:string)
         required(:transfer_type).filled(included_in?: Transfer::TYPES)
@@ -96,7 +96,7 @@ module Transfers
     end
 
     def fetch_sender_wallet(sender, currency)
-      Wallet.find_by!(user_id: user_ids, currency_id: currency.id).lock
+      Wallet.lock.find_by!(user_id: user_ids, currency_id: currency.id)
     end
 
     def parse_amount_to_int(amount, currency)
@@ -107,7 +107,7 @@ module Transfers
 
     def fetch_sender(sender_id)
       sender = User.find_by!(uuid: sender_id)
-      context.fail!("PERMISSION_DENIED") unless sender.id != current_user.id
+      context.fail!("FORBIDDEN") unless sender.id != current_user.id
       sender
     end
 

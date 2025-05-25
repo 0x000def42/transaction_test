@@ -8,7 +8,12 @@ class ApplicationInteractor
     end
   end
 
-  class ApplicationContract < Dry::Validation::Contract; end
+  class ApplicationContract < Dry::Validation::Contract
+    TypeContainer = Dry::Schema::TypeContainer.new
+    TypeContainer.register("params.uuid", Dry::Types["strict.string"].constrained(format: Constants::UUID_REGEX))
+  
+    config.types = TypeContainer
+  end
 
   class Context
     attr_reader :params, :current_user, :error
@@ -41,7 +46,6 @@ class ApplicationInteractor
     end
   end
 
-  UUID_FORMAT = /\A[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/i
   attr_reader :context
 
   class << self
