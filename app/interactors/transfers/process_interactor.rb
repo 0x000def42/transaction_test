@@ -29,7 +29,7 @@ module Transfers
         context.result = { entity: transfer }
       end
     ensure
-      transfer&.fail!
+      transfer&.fail! if context.failure?
     end
 
     private
@@ -39,13 +39,13 @@ module Transfers
     end
 
     def check_user!(sender_wallet, current_user)
-      context.fail!("FORBIDDEN") unless sender_wallet.user_id != current_user.id
+      context.fail!("FORBIDDEN") if sender_wallet.user_id != current_user.id
     end
 
     def move_funds(sender_wallet, recepient_wallet, amount)
       sender_wallet.update!(
         amount: sender_wallet.amount - amount,
-        amount_reserve: sender_wallet.amount_reserve - amount
+        reserve_amount: sender_wallet.reserve_amount - amount
       )
       recepient_wallet.update!(
         amount: recepient_wallet.amount + amount

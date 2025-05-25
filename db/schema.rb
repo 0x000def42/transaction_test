@@ -20,6 +20,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_20_151433) do
     t.integer "precision"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["code"], name: "index_currencies_on_code", unique: true
   end
 
   create_table "transfers", force: :cascade do |t|
@@ -30,7 +31,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_20_151433) do
     t.integer "amount", null: false
     t.string "transfer_type", null: false
     t.string "state", default: "created", null: false
-    t.datetime "execution_date"
+    t.datetime "execute_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["currency_id"], name: "index_transfers_on_currency_id"
@@ -52,6 +53,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_20_151433) do
     t.integer "reserve_amount", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["currency_id", "user_id"], name: "transfers_currency_id_user_id_udx", unique: true
     t.index ["currency_id"], name: "index_wallets_on_currency_id"
     t.index ["user_id"], name: "index_wallets_on_user_id"
   end

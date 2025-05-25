@@ -6,8 +6,8 @@ class Transfer < ApplicationRecord
 
   TYPES = [ IMMEDIATE_TYPE, SCHEDULED_TYPE ].freeze
 
-  belongs_to :sender_wallet
-  belongs_to :recepient_wallet
+  belongs_to :sender_wallet, class_name: "Wallet", foreign_key: "sender_wallet_id"
+  belongs_to :recepient_wallet, class_name: "Wallet", foreign_key: "recepient_wallet_id"
 
   aasm column: :state do
     state :created, initial: true

@@ -4,7 +4,9 @@ class ApplicationInteractor
 
     def initialize(context)
       @code = context.error[:code]
-      super(context.error[:message])
+      message = context.error[:message]
+      super_message = "#{context.klass} #{@code}"
+      super(super_message)
     end
   end
 
@@ -16,16 +18,17 @@ class ApplicationInteractor
   end
 
   class Context
-    attr_reader :params, :current_user, :error
+    attr_reader :params, :current_user, :error, :klass
 
     attr_accessor :result
 
-    def initialize(params:, current_user:)
+    def initialize(params, current_user, klass)
       @params = params
       @current_user = current_user
       @error = nil
       @stacktrace = nil
       @result = nil
+      @klass = klass
     end
 
     def success?
@@ -36,8 +39,8 @@ class ApplicationInteractor
       !!@error
     end
 
-    def fail!(error, message = nil)
-      @error = { error:, message: }
+    def fail!(code, message = nil)
+      @error = { code:, message: }
       raise Error, self
     end
 
@@ -53,23 +56,27 @@ class ApplicationInteractor
       interactor = self.new(params:, current_user:, **kwargs)
       contract = fetch_contract!
       validation_result = validate_contract(params, contract, interactor)
-      binding.irb # NOTE: Check validation result
+      binding.irb if validation_result.failure? # NOTE: Check validation result
       interactor.call
-      interactor.context.result
+      interactor.context
     end
 
     def validate_contract(params, contract, interactor)
       contract.call(**params)
     end
+
+    private
+
+    def fetch_contract!
+      self::Contract.new
+    end
   end
 
   def initialize(params:, current_user:)
-    @context = Context.new(params, current_user)
+    @context = Context.new(params, current_user, self.class)
   end
 
   private
 
-  def fetch_contract!
-    binding.irb # NOTE: fetch contract
-  end
+
 end

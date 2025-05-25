@@ -6,7 +6,7 @@ class CreateTransfers < ActiveRecord::Migration[8.0]
     end
 
     create_table :currencies do |t|
-      t.string :code, null: false
+      t.string :code, null: false, index: { unique: true }
       t.string :name, null: false
       t.integer :precision
       t.timestamps
@@ -19,7 +19,10 @@ class CreateTransfers < ActiveRecord::Migration[8.0]
       t.integer :amount, null: false, default: 0
       t.integer :reserve_amount, null: false, default: 0
       t.timestamps
+
     end
+
+    add_index :wallets, [:currency_id, :user_id], unique: true, name: "transfers_currency_id_user_id_udx"
 
     create_table :transfers do |t|
       t.uuid :uuid, null: false, default: "gen_random_uuid()"
@@ -29,7 +32,7 @@ class CreateTransfers < ActiveRecord::Migration[8.0]
       t.integer :amount, null: false
       t.string :transfer_type, null: false
       t.string :state, null: false, default: "created"
-      t.datetime :execution_date
+      t.datetime :execute_at
       t.timestamps
     end
   end

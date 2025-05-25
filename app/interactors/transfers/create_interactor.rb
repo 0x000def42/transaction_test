@@ -4,7 +4,7 @@ module Transfers
       params do
         required(:sender_id).filled(:uuid)
         required(:recepient_id).filled(:uuid)
-        required(:amount).filled(:decimal)
+        required(:amount).value(:decimal)
         required(:currency_code).filled(:string)
         required(:transfer_type).filled(included_in?: Transfer::TYPES)
         optional(:execute_at) # datetime
@@ -33,10 +33,10 @@ module Transfers
 
         recepient_wallet = fetch_recepient_wallet(recepient, currency)
 
-        created_transfer = create_transfer(sender_wallet, recepient_wallet, currency, params)
+        created_transfer = create_transfer(sender_wallet, recepient_wallet, currency, params, amount)
         reserve_funds(sender_wallet, amount)
 
-        transfer = process_or_enqueue_transfer(created_transfer)
+        transfer = process_or_enqueue_transfer(created_transfer, current_user)
 
         context.result = { entity: transfer }
       end
@@ -44,14 +44,17 @@ module Transfers
 
     private
 
+    def fetch_currency(code)
+      Currency.find_by!(code:)
+    end
+
     def process_or_enqueue_transfer(transfer, current_user)
-      process_transfer!(transfer, current_user) if transfer.transfer_type == Transfer::IMMEDIATE_TYPE
+      return process_transfer!(transfer, current_user) if transfer.transfer_type == Transfer::IMMEDIATE_TYPE
       enqueue_transfer!(transfer) if transfer.transfer_type == Transfer::SCHEDULED_TYPE
     end
 
     def process_transfer!(transfer, current_user)
-      result = ProcessInteractor.call(params: { transfer_id: transfer.uuid }, current_user:)
-      result[:entity]
+      ProcessInteractor.call(params: { transfer_id: transfer.uuid }, current_user:).result[:entity]
     end
 
     def enqueue_transfer!(transfer)
@@ -66,11 +69,11 @@ module Transfers
       )
     end
 
-    def create_transfer(sender_wallet, recepient_wallet, currency, params)
-      amount, transfer_type, execute_at = params.values_at(:amount, :transfer_type, :execute_at)
+    def create_transfer(sender_wallet, recepient_wallet, currency, params, amount)
+      transfer_type, execute_at = params.values_at(:transfer_type, :execute_at)
       Transfer.create(
         sender_wallet_id: sender_wallet.id,
-        recepient_wallet: recepient_wallet.id,
+        recepient_wallet_id: recepient_wallet.id,
         currency_id: currency.id,
         amount:,
         transfer_type:,
@@ -86,7 +89,7 @@ module Transfers
       wallet = Wallet.find_by(user_id: recepient.id, currency_id: currency.id)
       unless wallet
         Wallet.upsert({ user_id: recepient.id, currency_id: currency.id },
-          unique_by: %i[user_id currency_id],
+          unique_by: %i[currency_id user_id],
           returning: false
         )
         wallet = Wallet.find_by(user_id: recepient.id, currency_id: currency.id)
@@ -96,18 +99,18 @@ module Transfers
     end
 
     def fetch_sender_wallet(sender, currency)
-      Wallet.lock.find_by!(user_id: user_ids, currency_id: currency.id)
+      Wallet.lock.find_by!(user_id: sender.id, currency_id: currency.id)
     end
 
     def parse_amount_to_int(amount, currency)
-      real_amount = amount * (10**currency.precision)
-      context.fail!("INVALID_AMOUNT") if real_amount.frac != 0 || real_amount <= 0
+      real_amount = currency.convert_amount(amount)
+      context.fail!("INVALID_AMOUNT") if !real_amount.valid? || real_amount.to_i <= 0
       real_amount.to_i
     end
 
-    def fetch_sender(sender_id)
+    def fetch_sender(sender_id, current_user)
       sender = User.find_by!(uuid: sender_id)
-      context.fail!("FORBIDDEN") unless sender.id != current_user.id
+      context.fail!("FORBIDDEN") if sender.id != current_user.id
       sender
     end
 
