@@ -11,4 +11,10 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+
+  resources :transfers, only: [ :index, :create ] do
+    member do
+      post "cancel"
+    end
+  end
 end
